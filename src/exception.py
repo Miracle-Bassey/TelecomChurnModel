@@ -1,6 +1,5 @@
-import logging
 import sys  # retrieves exception details
-from src import logger
+from src.logger import logging
 
 
 def error_message_details(error, error_details:sys):
@@ -47,7 +46,7 @@ class CustomException(Exception):
 #        f=0/p
 #        print(f)
 #    except Exception as e:
-#        logging.info('logging has started')
+#        logging.info('divide by zero')
 #        raise CustomException(e, sys)
 
 
