@@ -52,9 +52,24 @@ class DataTransformation:
 
     @staticmethod
     def boxcox_transform(x):
-        """Apply Box-Cox transformation ensuring positive values."""
-        x = np.clip(x, 1e-6, None)  # Ensure values are positive (>0)
-        return np.column_stack([boxcox(x[:, i])[0] for i in range(x.shape[1])])
+        """
+        Apply Box-Cox transformation to each column of the input array.
+        Add noise to constant columns to allow transformation.
+        """
+        transformed_columns = []
+        for i in range(x.shape[1]):
+            column = x[:, i]
+            if np.all(column == column[0]):  # Check if the column is constant
+                logging.info(f"Adding noise to constant column {i} for Box-Cox transformation")
+                column = column + np.random.normal(0, 1e-9, size=len(column))  # Add tiny noise
+            try:
+                column = np.clip(column, 1e-6, None)  # Ensure values are positive
+                transformed_column = boxcox(column)[0]
+                transformed_columns.append(transformed_column)
+            except ValueError as e:
+                logging.warning(f"Box-Cox transformation failed for column {i}: {e}. Using original column.")
+                transformed_columns.append(column)  # Fallback to original column
+        return np.column_stack(transformed_columns)
 
     def get_data_transformer_object(self):
         '''

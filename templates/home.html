@@ -1,0 +1,113 @@
+# form action, contains all the fields.
+<html>
+<body>
+<div class="login">
+    <h1>Customer Data Entry Form</h1>
+
+    <form action="{{ url_for('predict_datapoint')}}" method="post">
+        <h1>
+            <legend>Customer Data Entry</legend>
+        </h1>
+
+        <!-- Call Failure -->
+        <div class="mb-3">
+            <label class="form-label">Call Failure</label>
+            <input class="form-control" type="number" name="Call Failure" placeholder="Enter number of call failures" required />
+        </div>
+
+        <!-- Complaints -->
+        <div class="mb-3">
+            <label class="form-label">Complaints (0: No complaint, 1: Complaint)</label>
+            <select class="form-control" name="Complaints" required>
+                <option value="" disabled selected>Select Complaint Status</option>
+                <option value="0">No Complaint</option>
+                <option value="1">Complaint</option>
+            </select>
+        </div>
+
+        <!-- Subscription Length -->
+        <div class="mb-3">
+            <label class="form-label">Subscription Length (in months)</label>
+            <input class="form-control" type="number" name="Subscription Length" placeholder="Enter total months of subscription" required />
+        </div>
+
+        <!-- Charge Amount -->
+        <div class="mb-3">
+            <label class="form-label">Charge Amount (0: lowest, 9: highest)</label>
+            <input class="form-control" type="number" name="Charge Amount" placeholder="Enter charge amount" min="0" max="9" required />
+        </div>
+
+        <!-- Seconds of Use -->
+        <div class="mb-3">
+            <label class="form-label">Seconds of Use</label>
+            <input class="form-control" type="number" name="Seconds of Use" placeholder="Enter total seconds of calls" required />
+        </div>
+
+        <!-- Frequency of use -->
+        <div class="mb-3">
+            <label class="form-label">Frequency of use (Total number of calls)</label>
+            <input class="form-control" type="number" name="Frequency of use" placeholder="Enter total number of calls" required />
+        </div>
+
+        <!-- Frequency of SMS -->
+        <div class="mb-3">
+            <label class="form-label">Frequency of SMS (Total number of text messages)</label>
+            <input class="form-control" type="number" name="Frequency of SMS" placeholder="Enter total number of text messages" required />
+        </div>
+
+        <!-- Distinct Called Numbers -->
+        <div class="mb-3">
+            <label class="form-label">Distinct Called Numbers</label>
+            <input class="form-control" type="number" name="Distinct Called Numbers" placeholder="Enter total number of distinct phone calls" required />
+        </div>
+
+        <!-- Age Group -->
+        <div class="mb-3">
+            <label class="form-label">Age Group (1: younger, 5: older)</label>
+            <input class="form-control" type="number" name="Age Group" placeholder="Enter age group" min="1" max="5" required />
+        </div>
+
+        <!-- Tariff Plan -->
+        <div class="mb-3">
+            <label class="form-label">Tariff Plan (1: Pay as you go, 2: Contractual)</label>
+            <select class="form-control" name="Tariff Plan" required>
+                <option value="" disabled selected>Select Tariff Plan</option>
+                <option value="1">Pay as you go</option>
+                <option value="2">Contractual</option>
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div class="mb-3">
+            <label class="form-label">Status (1: active, 2: non-active)</label>
+            <select class="form-control" name="Status" required>
+                <option value="" disabled selected>Select Status</option>
+                <option value="1">Active</option>
+                <option value="2">Non-active</option>
+            </select>
+        </div>
+
+        <!-- Age -->
+        <div class="mb-3">
+            <label class="form-label">Age</label>
+            <input class="form-control" type="number" name="Age" placeholder="Enter age of customer" required />
+        </div>
+
+        <!-- Customer Value -->
+        <div class="mb-3">
+            <label class="form-label">Customer Value</label>
+            <input class="form-control" type="number" name="Customer Value" placeholder="Enter customer value" step="0.01" required />
+        </div>
+
+        <!-- Submit Button -->
+        <div class="mb-3">
+            <input class="btn btn-primary" type="submit" value="Submit Data" required />
+        </div>
+    </form>
+
+    <h2>
+        The prediction result is: {{results}}
+    </h2>
+</body>
+</html>
+

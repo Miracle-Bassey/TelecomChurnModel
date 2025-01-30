@@ -3,7 +3,7 @@
 ## Data Dictionary
 
 
-| Column                  | Explanation                                             |
+ Column                  | Explanation                                             |
 |-------------------------|---------------------------------------------------------|
 | Call Failure            | number of call failures                                 |
 | Complaints              | binary (0: No complaint, 1: complaint)                  |
@@ -18,7 +18,7 @@
 | Status                  | binary (1: active, 2: non-active)                       |
 | Age                     | age of customer                                         |
 | Customer Value          | the calculated value of customer                        |
-| Churn                   | class label (1: churn, 0: non-churn)                   |
+| Churn                   | class label (1: churn, 0: non-churn) |                  |
 
 [Source](https://www.kaggle.com/royjafari/customer-churn) of dataset 
 and [source](https://archive.ics.uci.edu/ml/datasets/Iranian+Churn+Dataset) of dataset description.
