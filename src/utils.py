@@ -22,7 +22,6 @@ def save_object(file_path, obj):
         raise CustomException(e, sys)
 
 
-
 def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
     """
     Evaluate multiple classification models with hyperparameter tuning.
@@ -38,19 +37,19 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
     Returns:
         dict: A dictionary containing the evaluation metrics for each model.
         dict: A dictionary containing the best parameters for each model.
+        dict: A dictionary containing the best trained model for each model.
     """
     try:
-        # Dictionary to store evaluation results
-        report = {}
-        # Dictionary to store the best parameters for each model
-        best_params = {}
+        report = {}  # Store model performance
+        best_params = {}  # Store best hyperparameters
+        trained_models = {}  # Store trained models
 
         for model_name, model in models.items():
             print(f"Training {model_name}...")
 
-            # Hyperparameter tuning using RandomizedSearchCV if a param_grid is defined
+            # Hyperparameter tuning using RandomizedSearchCV if parameters exist
             if model_name in param_grids:
-                print("Performing RandomizedSearchCV...")
+                print(f"Performing RandomizedSearchCV for {model_name}...")
                 search = RandomizedSearchCV(
                     model,
                     param_distributions=param_grids[model_name],
@@ -60,47 +59,40 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
                     cv=3  # 3-fold cross-validation
                 )
                 search.fit(X_train, y_train)
-                model = search.best_estimator_
+                model = search.best_estimator_  # Get the best model
 
-                # Save the best parameters
+                # Save best parameters
                 best_params[model_name] = search.best_params_
 
-            # Train model
+            # Train the best model
             model.fit(X_train, y_train)
+            trained_models[model_name] = model  # Store trained model
 
             # Make predictions
             y_train_pred = model.predict(X_train)
             y_test_pred = model.predict(X_test)
 
-            # Evaluate Train and Test dataset
-            train_accuracy = accuracy_score(y_train, y_train_pred)
-            train_precision = precision_score(y_train, y_train_pred)
-            train_recall = recall_score(y_train, y_train_pred)
-            train_f1 = f1_score(y_train, y_train_pred)
-            train_auc = roc_auc_score(y_train, y_train_pred)
+            # Compute AUC correctly (some models need predict_proba)
+            if hasattr(model, "predict_proba"):
+                y_test_pred_proba = model.predict_proba(X_test)[:, 1]  # Probability of class 1
+                test_auc = roc_auc_score(y_test, y_test_pred_proba)
+            else:
+                test_auc = roc_auc_score(y_test, y_test_pred)
 
-            test_accuracy = accuracy_score(y_test, y_test_pred)
-            test_precision = precision_score(y_test, y_test_pred)
-            test_recall = recall_score(y_test, y_test_pred)
-            test_f1 = f1_score(y_test, y_test_pred)
-            test_auc = roc_auc_score(y_test, y_test_pred)
-
-            # Store results in the report
+            # Evaluate performance
             report[model_name] = {
-                'train_accuracy': train_accuracy,
-                'train_precision': train_precision,
-                'train_recall': train_recall,
-                'train_f1': train_f1,
-                'train_auc': train_auc,
-                'test_accuracy': test_accuracy,
-                'test_precision': test_precision,
-                'test_recall': test_recall,
-                'test_f1': test_f1,
-                'test_auc': test_auc
+                'train_accuracy': accuracy_score(y_train, y_train_pred),
+                'train_precision': precision_score(y_train, y_train_pred),
+                'train_recall': recall_score(y_train, y_train_pred),
+                'train_f1': f1_score(y_train, y_train_pred),
+                'test_accuracy': accuracy_score(y_test, y_test_pred),
+                'test_precision': precision_score(y_test, y_test_pred),
+                'test_recall': recall_score(y_test, y_test_pred),
+                'test_f1': f1_score(y_test, y_test_pred),
+                'test_auc': test_auc  # Store correct AUC
             }
 
-
-        return report, best_params
+        return report, best_params, trained_models
 
     except Exception as e:
-        raise CustomException(e, sys)
+        raise CustomException(e,sys)
