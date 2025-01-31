@@ -52,7 +52,7 @@ class CustomData:
 
     def get_data_as_df(self):
         try:
-            """ create a variable and then turn that to a dictionary as then df"""
+            """ creates a dictionary of, and then turn that to a df"""
             custom_data_input_dict = {
                 'Call Failure': self.call_failure,
                 'Complaints': self.complaints,

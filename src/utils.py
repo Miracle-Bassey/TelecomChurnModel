@@ -8,6 +8,7 @@ import pickle
 from src.exception import CustomException
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from sklearn.model_selection import RandomizedSearchCV
+from src.logger import logging
 
 def save_object(file_path, obj):
     try:
@@ -62,7 +63,9 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
                 model = search.best_estimator_  # Get the best model
 
                 # Save best parameters
+
                 best_params[model_name] = search.best_params_
+                logging.info(f"Best params for {model_name}: {best_params[model_name]}")
 
             # Train the best model
             model.fit(X_train, y_train)
