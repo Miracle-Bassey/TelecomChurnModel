@@ -44,10 +44,10 @@ class ModelTrainer:
 
             # Define models with class weights
             models = {
-                "Logistic Regression": LogisticRegression(class_weight='balanced', random_state=42),
-                "Random Forest": RandomForestClassifier(class_weight='balanced', random_state=42),
+                "Logistic Regression": LogisticRegression(class_weight=class_weight_dict, random_state=42),
+                "Random Forest": RandomForestClassifier(class_weight=class_weight_dict, random_state=42),
                 "CatBoost": CatBoostClassifier(scale_pos_weight=scale_pos_weight, verbose=0, random_seed=42),
-                "SVC": SVC(class_weight='balanced', probability=True, random_state=42),
+                "SVC": SVC(class_weight=class_weight_dict, probability=True, random_state=42),
             }
 
             # Define hyperparameter grids for tuning
