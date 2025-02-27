@@ -36,6 +36,7 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;Python.exceptions_handling.executor&quot;: &quot;Run&quot;,
+    &quot;Python.train_pipeline.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;database.data.extractors.current.export.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
@@ -51,7 +52,7 @@
       <recent name="C:\Users\efrui\DataspellProjects\TelcomChurnModel\notebook" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.exception">
+  <component name="RunManager" selected="Python.train_pipeline">
     <configuration name="Unnamed" type="PythonConfigurationType" factoryName="Python" singleton="false" nameIsGenerated="true">
       <module name="TelcomChurnModel" />
       <option name="ENV_FILES" value="" />
@@ -97,10 +98,38 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="train_pipeline" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="TelcomChurnModel" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/pipeline" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/pipeline/train_pipeline.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Python.Unnamed" />
+      <item itemvalue="Python.train_pipeline" />
       <item itemvalue="Python.exception" />
     </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.train_pipeline" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>

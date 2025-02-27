@@ -1,9 +1,8 @@
-import pickle
-from flask import Flask, request, render_template
-import numpy as np
-import pandas as pd
 
-from sklearn.preprocessing import RobustScaler
+from flask import Flask, request, render_template
+
+
+
 
 from src.pipeline.pred_pipeline import CustomData,PredictionPipeline
 from src.logger import logging
@@ -20,7 +19,7 @@ def index():
 @app.route('/predict_churn',methods=['GET','POST'])
 def predict_datapoint():
     if request.method == 'GET':
-        return render_template('home2.html') # the data fields needto make the prediction
+        return render_template('home.html') # the data fields needto make the prediction
     else:
         data=CustomData(
             call_failure= int(request.form.get('Call Failure')),

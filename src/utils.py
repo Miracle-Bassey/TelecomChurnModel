@@ -1,13 +1,12 @@
 import sys
 import os
 
-import pandas as pd
+
 import numpy as np
 import pickle
 
 from src.exception import CustomException
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
-from sklearn.model_selection import RandomizedSearchCV
 from src.logger import logging
 
 def save_object(file_path, obj):
@@ -23,82 +22,97 @@ def save_object(file_path, obj):
         raise CustomException(e, sys)
 
 
-def evaluate_models(X_train, y_train, X_test, y_test, models, param_grids):
-    """
-    Evaluate multiple classification models with hyperparameter tuning.
+def train_model(model, X_train, y_train, X_val, y_val):
+    """Train the CatBoost model."""
+    model.fit(X_train, y_train, eval_set=(X_val, y_val))
+    return model
 
-    Args:
-        X_train (pd.DataFrame): Training features.
-        y_train (pd.Series): Training target.
-        X_test (pd.DataFrame): Testing features.
-        y_test (pd.Series): Testing target.
-        models (dict): Dictionary of models to evaluate.
-        param_grids (dict): Dictionary of parameter grids for hyperparameter tuning.
+
+def make_predictions(model, X_train, X_val, X_test, X_raw):
+    """Generate predictions for all datasets."""
+    return {
+        "train": model.predict(X_train),
+        "validation": model.predict(X_val),
+        "test": model.predict(X_test),
+        "raw": model.predict(X_raw),
+        "train_proba": model.predict_proba(X_train)[:, 1],
+        "validation_proba": model.predict_proba(X_val)[:, 1],
+        "test_proba": model.predict_proba(X_test)[:, 1],
+        "raw_proba": model.predict_proba(X_raw)[:, 1],
+    }
+
+
+def compute_metrics(y_true, y_pred, y_pred_proba=None):
+    """Calculate classification metrics."""
+    metrics = {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred),
+        "recall": recall_score(y_true, y_pred),
+        "f1": f1_score(y_true, y_pred),
+    }
+    if y_pred_proba is not None:
+        metrics["auc"] = roc_auc_score(y_true, y_pred_proba)
+    return metrics
+
+
+def compute_probability_stats(y_train_proba, y_val_proba, y_test_proba, y_raw_proba):
+    """Compute standard deviation of probability predictions."""
+    return {
+        "train_std": np.std(y_train_proba),
+        "validation_std": np.std(y_val_proba),
+        "test_std": np.std(y_test_proba),
+        "raw_std": np.std(y_raw_proba),
+    }
+
+
+def compute_class_distribution(y_raw):
+    """Compute class distribution in the raw dataset."""
+    return {"class_0": (y_raw == 0).sum(), "class_1": (y_raw == 1).sum()}
+
+
+def evaluate_model(X_train, y_train, X_val, y_val, X_test, y_test, X_raw, model):
+    """
+    Train and evaluate a single CatBoost model using modular helper functions.
 
     Returns:
-        dict: A dictionary containing the evaluation metrics for each model.
-        dict: A dictionary containing the best parameters for each model.
-        dict: A dictionary containing the best trained model for each model.
+        dict: Model evaluation metrics.
+        dict: Probability standard deviations.
+        np.ndarray: Raw dataset predictions.
+        dict: Raw data class distribution.
+        CatBoostClassifier: Trained model.
     """
     try:
-        report = {}  # Store model performance
-        best_params = {}  # Store best hyperparameters
-        trained_models = {}  # Store trained models
+        logging.info("Training CatBoost model...")
+        model = train_model(model, X_train, y_train, X_val, y_val)
 
-        for model_name, model in models.items():
-            print(f"Training {model_name}...")
+        logging.info("Generating predictions...")
+        preds = make_predictions(model, X_train, X_val, X_test, X_raw)
 
-            # Hyperparameter tuning using RandomizedSearchCV if parameters exist
-            if model_name in param_grids:
-                print(f"Performing RandomizedSearchCV for {model_name}...")
-                search = RandomizedSearchCV(
-                    model,
-                    param_distributions=param_grids[model_name],
-                    n_iter=10,  # Number of parameter settings to sample
-                    random_state=42,  # For reproducibility
-                    n_jobs=-1,  # Use all available cores
-                    cv=3  # 3-fold cross-validation
-                )
-                search.fit(X_train, y_train)
-                model = search.best_estimator_  # Get the best model
+        logging.info("Computing evaluation metrics...")
+        report = {
+            "train": compute_metrics(y_train, preds["train"], preds["train_proba"]),
+            "validation": compute_metrics(y_val, preds["validation"], preds["validation_proba"]),
+            "test": compute_metrics(y_test, preds["test"], preds["test_proba"]),
+        }
 
-                # Save best parameters
+        logging.info("Computing probability distribution statistics...")
+        probability_stats = compute_probability_stats(
+            preds["train_proba"], preds["validation_proba"], preds["test_proba"], preds["raw_proba"]
+        )
 
-                best_params[model_name] = search.best_params_
-                logging.info(f"Best params for {model_name}: {best_params[model_name]}")
+        logging.info("Computing class distribution for raw data...")
+        raw_class_distribution = compute_class_distribution(preds["raw"])
 
-            # Train the best model
-            model.fit(X_train, y_train)
-            trained_models[model_name] = model  # Store trained model
+        logging.info(f"Validation Recall: {report['validation']['recall']} | Test Recall: {report['test']['recall']}")
+        logging.info(f"Raw Data Predictions: {raw_class_distribution}")
 
-            # Make predictions
-            y_train_pred = model.predict(X_train)
-            y_test_pred = model.predict(X_test)
-
-            # Compute AUC correctly (some models need predict_proba)
-            if hasattr(model, "predict_proba"):
-                y_test_pred_proba = model.predict_proba(X_test)[:, 1]  # Probability of class 1
-                test_auc = roc_auc_score(y_test, y_test_pred_proba)
-            else:
-                test_auc = roc_auc_score(y_test, y_test_pred)
-
-            # Evaluate performance
-            report[model_name] = {
-                'train_accuracy': accuracy_score(y_train, y_train_pred),
-                'train_precision': precision_score(y_train, y_train_pred),
-                'train_recall': recall_score(y_train, y_train_pred),
-                'train_f1': f1_score(y_train, y_train_pred),
-                'test_accuracy': accuracy_score(y_test, y_test_pred),
-                'test_precision': precision_score(y_test, y_test_pred),
-                'test_recall': recall_score(y_test, y_test_pred),
-                'test_f1': f1_score(y_test, y_test_pred),
-                'test_auc': test_auc  # Store correct AUC
-            }
-
-        return report, best_params, trained_models
+        return report, probability_stats, preds["raw"], preds["raw_proba"], raw_class_distribution, model
 
     except Exception as e:
-        raise CustomException(e,sys)
+        raise CustomException(e, sys)
+
+
+
 
 def load_object(file_path):
     try:

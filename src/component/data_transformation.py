@@ -9,6 +9,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import RobustScaler, FunctionTransformer
 from scipy.stats import boxcox
+from imblearn.over_sampling import ADASYN
 
 from src.exception import CustomException
 from src.logger import logging
@@ -102,16 +103,6 @@ class DataTransformation:
                 ]
             )
 
-            # Call efficiency pipeline
-            call_efficiency_pipeline = Pipeline(
-                steps=[
-                    ("imputer", SimpleImputer(strategy="mean")),
-                    ("call_eff", FunctionTransformer(self.compute_call_efficiency, validate=False)),
-                    ("log", FunctionTransformer(np.log1p, validate=False)),
-                    ("scaler", RobustScaler())
-                ]
-            )
-
             # Log transform pipeline
             log_pipeline = Pipeline(
                 steps=[
@@ -150,7 +141,6 @@ class DataTransformation:
                 transformers=[
                     ("binary_pipeline", binary_pipeline, binary_columns),
                     ("ordinal_pipeline", ordinal_pipeline, ordinal_columns),
-                    ("call_efficiency_pipeline", call_efficiency_pipeline, ['Seconds of Use', 'Frequency of use']),
                     ("log_pipeline", log_pipeline, log_transform_columns),
                     ("boxcox_pipeline", boxcox_pipeline, boxcox_transform_columns),
                     ("reflect_pipeline", reflect_pipeline, reflect_transform_columns)
@@ -165,33 +155,67 @@ class DataTransformation:
             logging.error("Error in creating preprocessing object")
             raise CustomException(e, sys)
 
-    def initiate_data_transformation(self, train_path, test_path):
+    def initiate_data_transformation(self, train_path, val_path,test_path,raw_path):
         '''
         This function initiates the data transformation process.
         '''
         try:
             train_df = pd.read_csv(train_path)
+            val_df = pd.read_csv(val_path)
             test_df = pd.read_csv(test_path)
+            raw_df = pd.read_csv(raw_path)
 
-            logging.info("Read train and test data completed")
+            logging.info("Reading train, Validation,Raw and test data completed")
 
             logging.info("Obtaining preprocessing object")
             preprocessing_obj = self.get_data_transformer_object()
 
-            target_column_name = "Churn"  # Replace with your actual target column name
+            target_column_name = "Churn"
             input_feature_train_df = train_df.drop(columns=[target_column_name], axis=1)
             target_feature_train_df = train_df[target_column_name]
+
+            input_feature_val_df = val_df.drop(columns=[target_column_name], axis=1)
+            target_feature_val_df = val_df[target_column_name]
 
             input_feature_test_df = test_df.drop(columns=[target_column_name], axis=1)
             target_feature_test_df = test_df[target_column_name]
 
-            logging.info("Applying preprocessing object on training and testing dataframes")
+            input_feature_raw_df = raw_df.drop(columns=[target_column_name], axis=1)
+            target_feature_raw_df = raw_df[target_column_name]
+
+
+            logging.info("Applying preprocessing object on train, test, val and raw dataframes")
 
             input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
+            input_feature_val_arr = preprocessing_obj.transform(input_feature_val_df)
             input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
+            input_feature_raw_arr = preprocessing_obj.transform(input_feature_raw_df)
+
+            logging.info("Feature Importance")
+            selected_indices=[1, 12, 2, 10, 6, 5, 9, 8, 7, 11]
+
+            input_feature_train_arr = input_feature_train_arr[:, selected_indices]
+            input_feature_val_arr = input_feature_val_arr[:, selected_indices]
+            input_feature_test_arr = input_feature_test_arr[:, selected_indices]
+            input_feature_raw_arr = input_feature_raw_arr[:, selected_indices]
+
+            logging.info("Feature Importance Completed")
+
+            # Check class distribution before ADASYN
+            logging.info(f"Before ADASYN class distribution:\n{pd.Series(target_feature_train_df).value_counts()}")
+            # Resample training data using ADASYN
+            logging.info("Applying ADASYN resampling on training data for minority group")
+            adasyn = ADASYN(sampling_strategy='minority', random_state=42)
+            input_feature_train_arr, target_feature_train_df = adasyn.fit_resample(input_feature_train_arr, target_feature_train_df)
+
+            logging.info(f"New training class distribution after ADASYN: {pd.Series(target_feature_train_df).value_counts()}")
+
+            logging.info("Now we join but dependant and target variable into a single array")
 
             train_arr = np.c_[input_feature_train_arr, np.array(target_feature_train_df)]
+            val_arr = np.c_[input_feature_val_arr, np.array(target_feature_val_df)]
             test_arr = np.c_[input_feature_test_arr, np.array(target_feature_test_df)]
+            raw_arr = np.c_[input_feature_raw_arr, np.array(raw_df)]
 
             logging.info("Saving preprocessing object")
             save_object(
@@ -201,7 +225,9 @@ class DataTransformation:
 
             return (
                 train_arr,
+                val_arr,
                 test_arr,
+                raw_arr,
                 self.data_transformation_config.preprocessor_obj_file_path,
             )
         except Exception as e:
