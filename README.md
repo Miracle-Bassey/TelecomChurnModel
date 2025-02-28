@@ -20,7 +20,7 @@ The key objectives include:
 
 ## Project Structure
 
-TelecomChurnModel/
+`**TelecomChurnModel/
 ├── .ebextensions/
 ├── artifacts/
 │   ├── data.csv
@@ -60,7 +60,7 @@ TelecomChurnModel/
 ├── application.py
 ├── README.md
 ├── requirements.txt
-└── setup.py
+└── setup.py**`
 
 ## Process Flow
 ![Alt text](images/Churn_Workflow.jpg)
